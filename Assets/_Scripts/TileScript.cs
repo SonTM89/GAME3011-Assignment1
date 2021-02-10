@@ -10,11 +10,13 @@ public class TileScript : MonoBehaviour, IPointerClickHandler
 
     private GridGenerator gameGrid;
 
+
     // Start is called before the first frame update
     void Start()
     {
         gameGrid = transform.parent.GetComponent<GridGenerator>();
     }
+
 
     // Update is called once per frame
     void Update()
@@ -22,14 +24,17 @@ public class TileScript : MonoBehaviour, IPointerClickHandler
         
     }
 
+
     public void SetGridIndices(int r, int c)
     {
         row = r;
         col = c;
     }
 
+
     public void OnPointerClick(PointerEventData eventData)
     {
+        // Process clicking behaviour in Scan Mode
         if(gameGrid.scanMode == true && gameGrid.scanTimes < 6)
         {
             if (gameObject.tag == "Normal")
@@ -83,7 +88,7 @@ public class TileScript : MonoBehaviour, IPointerClickHandler
         }
 
 
-        // Extract resources
+        // Process clicking behaviour in Extract Mode
         if(gameGrid.extractMode == true && gameGrid.extractTimes < 3)
         {
             gameGrid.message.text = "You've just extracted!";
@@ -238,6 +243,7 @@ public class TileScript : MonoBehaviour, IPointerClickHandler
             }           
         }
     }
+
 
     public void ChangeResource(int row, int col)
     {

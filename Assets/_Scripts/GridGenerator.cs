@@ -7,88 +7,57 @@ using TMPro;
 
 public class GridGenerator : MonoBehaviour
 {
-    private System.Random rand = new System.Random();
+    private Vector3 defaultTransform;
+    private Vector2 mapSize;
 
-    //public Transform tilePrefab;
-    public Vector2 mapSize;
+    public bool scanMode;
+    public bool extractMode;
 
-    public Canvas mainCanvas;
+    [Range(0,1)]
+    public float outline;
 
-    Vector3 defaultTransform;
+    public GameObject[,] grid      = new GameObject[20, 20];
+    public GameObject[,] resources = new GameObject[20, 20];
 
     List<Tuple<int, int>> goldList = new List<Tuple<int, int>>();
     List<Tuple<int, int>> silverList = new List<Tuple<int, int>>();
     List<Tuple<int, int>> sphereList = new List<Tuple<int, int>>();
 
-    [Range(0,1)]
-    public float outline;
-
-    public Sprite goldSprite;
-    public Sprite silverSprite;
-    public Sprite sphereSprite;
-    public Sprite noneSprite;
-    
-
-    public GameObject[,] grid      = new GameObject[20, 20];
-    public GameObject[,] resources = new GameObject[20, 20];
-
-    public bool gameOver;
-    public bool scanMode;
-    public bool extractMode;
-
+    [Header("Statistics")]
     public int totalResources   = 0;
     public int scanTimes        = 0;
     public int extractTimes     = 0;
 
+
+    [Header("UI References")]
+    public Canvas mainCanvas;
     public TextMeshProUGUI resourcesAmount;
     public TextMeshProUGUI scanAmount;
     public TextMeshProUGUI extractAmount;
     public TextMeshProUGUI currentMode;
     public TextMeshProUGUI message;
-
     public GameObject      actionPanel;
+
+    [Header("Sprite References")]
+    public Sprite goldSprite;
+    public Sprite silverSprite;
+    public Sprite sphereSprite;
+    public Sprite noneSprite;
 
 
     private void Start()
     {
+        mapSize.x = mapSize.y = 20;
+
         defaultTransform = transform.position;
 
-        //gameOver = false;
-        //extractMode = true;
-        //scanMode    = false;
-
-        //GenerateGrid();
-
-
-        //GenerateMap();
-
-
-        //for (int r = 0; r < 20; r++)
-        //{
-        //    for (int c = 0; c < 20; c++)
-        //    {
-        //        if (r % 2 == 0)
-        //        {
-        //            grid[r, c].SetActive(false);
-        //        }
-        //        //Debug.Log(grid[r, c].transform.position.x);
-        //    }
-        //}
-
-        //PlaceResources();
-
-        //GenerateResource();
-
         ResetGame();
-
-
-        
-
     }
 
 
     private void Update()
     {
+        // Setting Game Over state
         if(extractTimes >= 3)
         {
             scanMode    = false;
@@ -99,6 +68,7 @@ public class GridGenerator : MonoBehaviour
         }
 
 
+        // Update UI elements
         resourcesAmount.text    = totalResources.ToString();
         scanAmount.text         = scanTimes.ToString() + " / 6";
         extractAmount.text      = extractTimes.ToString() + " / 3";
@@ -111,15 +81,14 @@ public class GridGenerator : MonoBehaviour
         {
             currentMode.text = "EXTRACT";
         }
-
     }
 
 
+    // Reset all values and Set up a new game
     public void ResetGame()
     {
         transform.position = defaultTransform;
 
-        gameOver    = false;
         scanMode    = false;
         extractMode = true;
 
@@ -134,6 +103,7 @@ public class GridGenerator : MonoBehaviour
         silverList  = new List<Tuple<int, int>>();
         sphereList  = new List<Tuple<int, int>>();
 
+        // Clear old grid and resource
         for (int r = 0; r < 20; r++)
         {
             for (int c = 0; c < 20; c++)
@@ -150,12 +120,17 @@ public class GridGenerator : MonoBehaviour
             }
         }
 
+
         GenerateMap();
+
 
         PlaceResources();
 
+
         GenerateResource();
 
+
+        // Set grid transform to be at center
         GameObject refTile = (GameObject)Instantiate(Resources.Load("Normal"));
         float sizeS = refTile.GetComponent<RectTransform>().rect.width;
         Destroy(refTile);
@@ -166,6 +141,8 @@ public class GridGenerator : MonoBehaviour
         transform.position = new Vector3(mainCanvas.GetComponent<RectTransform>().rect.width - (gridW / 2), mainCanvas.GetComponent<RectTransform>().rect.height - (gridH / 2), 0);
     }
 
+
+    // Update when clicking Scan Button
     public void OnClickedScan()
     {
         scanMode    = true;
@@ -174,6 +151,8 @@ public class GridGenerator : MonoBehaviour
         currentMode.text = "SCAN";
     }
 
+
+    // Update when clicking Extract Button
     public void OnClickedExtract()
     {
         scanMode = false;
@@ -183,18 +162,7 @@ public class GridGenerator : MonoBehaviour
     }
 
 
-    //public void GenerateGrid()
-    //{
-    //    for(int i = 0; i < mapSize.x; i++)
-    //    {
-    //        for(int j =0; j < mapSize.y; j++)
-    //        {
-    //            Vector3 tilePosition = new Vector3(-mapSize.x / 2 + 0.5f + i,-mapSize.y / 2 + 0.5f + j,0);
-    //            Transform newTile = Instantiate(tilePrefab, tilePosition, Quaternion.Euler(Vector3.one)) as Transform;
-    //        }
-    //    }
-    //}
-
+    // Generate cover grid
     public void GenerateMap()
     {
         GameObject refTile = (GameObject)Instantiate(Resources.Load("Normal"));
@@ -223,6 +191,8 @@ public class GridGenerator : MonoBehaviour
         
     }
 
+
+    // Generate Resources Grid
     public void GenerateResource()
     {
         GameObject refGold      = (GameObject)Instantiate(Resources.Load("Gold"));
@@ -232,6 +202,8 @@ public class GridGenerator : MonoBehaviour
 
         float size = refGold.GetComponent<RectTransform>().rect.width;
 
+
+        // Set None Resource
         for (int r = 0; r < mapSize.x; r++)
         {
             for (int c = 0; c < mapSize.y; c++)
@@ -251,6 +223,8 @@ public class GridGenerator : MonoBehaviour
             }
         }
 
+
+        // Set Gold Resource
         for (int i = 0; i < goldList.Count; i++)
         {
             int r = goldList[i].Item1;
@@ -269,7 +243,7 @@ public class GridGenerator : MonoBehaviour
         }
 
 
-
+        // Set Silver Resource
         for(int i = 0; i < silverList.Count; i++)
         {
             int r = silverList[i].Item1;
@@ -288,6 +262,7 @@ public class GridGenerator : MonoBehaviour
         }
 
 
+        // Set Sphere Resource
         for (int i = 0; i < sphereList.Count; i++)
         {
             int r = sphereList[i].Item1;
@@ -306,27 +281,16 @@ public class GridGenerator : MonoBehaviour
         }
 
 
-        
-
         Destroy(refGold);
         Destroy(refSilver);
         Destroy(refSphere);
         Destroy(refNone);
-
     }
 
     public void PlaceResources()
     {
         for(int i = 0; i < 5; i ++)
         {
-            //int x = UnityEngine.Random.Range(2, 18);
-            //int y = UnityEngine.Random.Range(2, 18);
-
-            //Debug.Log(centralList.Count);
-            //Debug.Log(x + "-" + y);
-
-            //centralList.Add(new Tuple<int, int>(x, y));
-
             RandomizeCentralResource();
             Debug.Log(goldList[i]);
 
@@ -334,6 +298,7 @@ public class GridGenerator : MonoBehaviour
             int goldColPos = goldList[i].Item2;
 
             
+            // Place Silver Resoucres around Gold Resources
             silverList.Add(new Tuple<int, int>(goldRowPos, goldColPos - 1));
             silverList.Add(new Tuple<int, int>(goldRowPos, goldColPos + 1));
             silverList.Add(new Tuple<int, int>(goldRowPos - 1, goldColPos));
@@ -344,6 +309,7 @@ public class GridGenerator : MonoBehaviour
             silverList.Add(new Tuple<int, int>(goldRowPos + 1, goldColPos + 1));
 
 
+            // Place Sphere Resoucres around Silver Resources
             sphereList.Add(new Tuple<int, int>(goldRowPos, goldColPos - 2));
             sphereList.Add(new Tuple<int, int>(goldRowPos, goldColPos + 2));
             sphereList.Add(new Tuple<int, int>(goldRowPos - 2, goldColPos));
@@ -364,6 +330,8 @@ public class GridGenerator : MonoBehaviour
 
     }
 
+
+    // Randomize positons of Gold Resources
     public void RandomizeCentralResource()
     {
         int x = UnityEngine.Random.Range(2, 18);
@@ -391,7 +359,6 @@ public class GridGenerator : MonoBehaviour
             } 
             else
             {
-                Debug.Log("Ra");
                 RandomizeCentralResource();
             }
         }
