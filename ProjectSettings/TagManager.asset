@@ -8,6 +8,8 @@ TagManager:
   - Silver
   - Sphere
   - None
+  - Normal
+  - ActionPanel
   layers:
   - Default
   - TransparentFX

@@ -1,16 +1,20 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using System;
+using TMPro;
 
 public class GridGenerator : MonoBehaviour
 {
     private System.Random rand = new System.Random();
 
-    public Transform tilePrefab;
+    //public Transform tilePrefab;
     public Vector2 mapSize;
 
     public Canvas mainCanvas;
+
+    Vector3 defaultTransform;
 
     List<Tuple<int, int>> goldList = new List<Tuple<int, int>>();
     List<Tuple<int, int>> silverList = new List<Tuple<int, int>>();
@@ -19,18 +23,45 @@ public class GridGenerator : MonoBehaviour
     [Range(0,1)]
     public float outline;
 
-    GameObject[,] grid      = new GameObject[20, 20];
-    GameObject[,] resources = new GameObject[20, 20];
+    public Sprite goldSprite;
+    public Sprite silverSprite;
+    public Sprite sphereSprite;
+    public Sprite noneSprite;
+    
+
+    public GameObject[,] grid      = new GameObject[20, 20];
+    public GameObject[,] resources = new GameObject[20, 20];
+
+    public bool gameOver;
+    public bool scanMode;
+    public bool extractMode;
+
+    public int totalResources   = 0;
+    public int scanTimes        = 0;
+    public int extractTimes     = 0;
+
+    public TextMeshProUGUI resourcesAmount;
+    public TextMeshProUGUI scanAmount;
+    public TextMeshProUGUI extractAmount;
+    public TextMeshProUGUI currentMode;
+    public TextMeshProUGUI message;
+
+    public GameObject      actionPanel;
 
 
     private void Start()
     {
-        
+        defaultTransform = transform.position;
+
+        //gameOver = false;
+        //extractMode = true;
+        //scanMode    = false;
 
         //GenerateGrid();
-        //GenerateResource();
 
-        GenerateMap();
+
+        //GenerateMap();
+
 
         //for (int r = 0; r < 20; r++)
         //{
@@ -44,6 +75,83 @@ public class GridGenerator : MonoBehaviour
         //    }
         //}
 
+        //PlaceResources();
+
+        //GenerateResource();
+
+        ResetGame();
+
+
+        
+
+    }
+
+
+    private void Update()
+    {
+        if(extractTimes >= 3)
+        {
+            scanMode    = false;
+            extractMode = false;
+
+            actionPanel.SetActive(false);
+            message.text = "Your total resources are: " + totalResources + "\n\nPress 'Restart' Button to play again!";
+        }
+
+
+        resourcesAmount.text    = totalResources.ToString();
+        scanAmount.text         = scanTimes.ToString() + " / 6";
+        extractAmount.text      = extractTimes.ToString() + " / 3";
+
+        if(scanMode == true)
+        {
+            currentMode.text = "SCAN";
+        }
+        else if(extractMode == true)
+        {
+            currentMode.text = "EXTRACT";
+        }
+
+    }
+
+
+    public void ResetGame()
+    {
+        transform.position = defaultTransform;
+
+        gameOver    = false;
+        scanMode    = false;
+        extractMode = true;
+
+        actionPanel.SetActive(true);
+        message.text = "";
+
+        totalResources = 0;
+        scanTimes = 0;
+        extractTimes = 0;
+
+        goldList    = new List<Tuple<int, int>>();
+        silverList  = new List<Tuple<int, int>>();
+        sphereList  = new List<Tuple<int, int>>();
+
+        for (int r = 0; r < 20; r++)
+        {
+            for (int c = 0; c < 20; c++)
+            {
+                if (grid[r, c] != null)
+                {
+                    Destroy(grid[r, c]);
+                }
+
+                if (resources[r, c] != null)
+                {
+                    Destroy(resources[r, c]);
+                }
+            }
+        }
+
+        GenerateMap();
+
         PlaceResources();
 
         GenerateResource();
@@ -56,21 +164,36 @@ public class GridGenerator : MonoBehaviour
         float gridH = mapSize.y * sizeS;
 
         transform.position = new Vector3(mainCanvas.GetComponent<RectTransform>().rect.width - (gridW / 2), mainCanvas.GetComponent<RectTransform>().rect.height - (gridH / 2), 0);
-
     }
 
-
-    public void GenerateGrid()
+    public void OnClickedScan()
     {
-        for(int i = 0; i < mapSize.x; i++)
-        {
-            for(int j =0; j < mapSize.y; j++)
-            {
-                Vector3 tilePosition = new Vector3(-mapSize.x / 2 + 0.5f + i,-mapSize.y / 2 + 0.5f + j,0);
-                Transform newTile = Instantiate(tilePrefab, tilePosition, Quaternion.Euler(Vector3.one)) as Transform;
-            }
-        }
+        scanMode    = true;
+        extractMode = false;
+
+        currentMode.text = "SCAN";
     }
+
+    public void OnClickedExtract()
+    {
+        scanMode = false;
+        extractMode = true;
+
+        currentMode.text = "EXTRACT";
+    }
+
+
+    //public void GenerateGrid()
+    //{
+    //    for(int i = 0; i < mapSize.x; i++)
+    //    {
+    //        for(int j =0; j < mapSize.y; j++)
+    //        {
+    //            Vector3 tilePosition = new Vector3(-mapSize.x / 2 + 0.5f + i,-mapSize.y / 2 + 0.5f + j,0);
+    //            Transform newTile = Instantiate(tilePrefab, tilePosition, Quaternion.Euler(Vector3.one)) as Transform;
+    //        }
+    //    }
+    //}
 
     public void GenerateMap()
     {
@@ -91,6 +214,7 @@ public class GridGenerator : MonoBehaviour
                 //Debug.Log(posX);
 
                 grid[r, c] = tile;
+                grid[r, c].GetComponent<TileScript>().SetGridIndices(r, c);
             }
         }
 
@@ -108,6 +232,25 @@ public class GridGenerator : MonoBehaviour
 
         float size = refGold.GetComponent<RectTransform>().rect.width;
 
+        for (int r = 0; r < mapSize.x; r++)
+        {
+            for (int c = 0; c < mapSize.y; c++)
+            {
+                    GameObject tile = (GameObject)Instantiate(refNone, transform);
+
+                    float posX = c * size * (1 + outline) + size / 2;
+                    float posY = -r * size * (-1 - outline) + size / 2;
+
+                    tile.transform.position = new Vector3(posX, posY, 0);
+
+                    resources[r, c] = tile;
+
+                    resources[r, c].GetComponent<TileScript>().SetGridIndices(r, c);
+                    resources[r, c].SetActive(false);
+
+            }
+        }
+
         for (int i = 0; i < goldList.Count; i++)
         {
             int r = goldList[i].Item1;
@@ -120,6 +263,9 @@ public class GridGenerator : MonoBehaviour
             tile.transform.position = new Vector3(posX, posY, 0);
 
             resources[r, c] = tile;
+
+            resources[r, c].GetComponent<TileScript>().SetGridIndices(r, c);
+            resources[r, c].SetActive(false);
         }
 
 
@@ -136,6 +282,9 @@ public class GridGenerator : MonoBehaviour
             tile.transform.position = new Vector3(posX, posY, 0);
 
             resources[r, c] = tile;
+
+            resources[r, c].GetComponent<TileScript>().SetGridIndices(r, c);
+            resources[r, c].SetActive(false);
         }
 
 
@@ -151,31 +300,18 @@ public class GridGenerator : MonoBehaviour
             tile.transform.position = new Vector3(posX, posY, 0);
 
             resources[r, c] = tile;
+
+            resources[r, c].GetComponent<TileScript>().SetGridIndices(r, c);
+            resources[r, c].SetActive(false);
         }
 
 
-        for (int r = 0; r < mapSize.x; r++)
-        {
-            for (int c = 0; c < mapSize.y; c++)
-            {
-                if(resources[r, c] == null)
-                {
-                    GameObject tile = (GameObject)Instantiate(refNone, transform);
+        
 
-                    float posX = c * size * (1 + outline) + size / 2;
-                    float posY = -r * size * (-1 - outline) + size / 2;
-
-                    tile.transform.position = new Vector3(posX, posY, 0);
-
-                    resources[r, c] = tile;                    
-                }
-
-                resources[r, c].SetActive(false);
-
-            }
-        }
-
-
+        Destroy(refGold);
+        Destroy(refSilver);
+        Destroy(refSphere);
+        Destroy(refNone);
 
     }
 
